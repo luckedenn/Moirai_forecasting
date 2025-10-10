@@ -1,0 +1,14 @@
+{
+  "dataset": "weather_melbourne",
+  "prediction_length": 30,
+  "context_length": 365,
+  "frequency": "D",
+  "n_shots": 3,
+  "MAE_mean": 2.215343901316325,
+  "MAE_std": 0.06982693905490646,
+  "RMSE_mean": 2.85500025390643,
+  "RMSE_std": 0.07014575286098879,
+  "MAPE_mean": 17.927432436746816,
+  "sMAPE_mean": 17.414132403638455,
+  "sMAPE_std": 2.42822810699821
+}

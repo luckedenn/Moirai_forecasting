@@ -1,0 +1,16 @@
+{
+  "Model": "LSTM",
+  "MAE_mean": 19.00445135901956,
+  "MAE_std": 9.987424843718083,
+  "RMSE_mean": 20.606106197132785,
+  "RMSE_std": 10.246738832383746,
+  "sMAPE_mean": 8.950418058563681,
+  "sMAPE_std": 4.2493552758481075,
+  "windows": 17,
+  "PDT": 24,
+  "lookback": 250,
+  "epochs": 10,
+  "hidden_size": 64,
+  "num_layers": 2,
+  "freq": "B"
+}
