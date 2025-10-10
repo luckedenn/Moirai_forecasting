@@ -8,9 +8,6 @@ __pycache__/
 *.pyd
 
 # Data dan hasil eksperimen
-data/
-results/
-results_*/
 *.png
 *.csv
 *.json
