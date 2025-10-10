@@ -354,8 +354,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-- **Author**: [Your Name]
-- **Email**: [your.email@example.com]
+- **Author**: [Lucas Chandra]
+- **Email**: [lucaschandra05@gmail.com]
 - **GitHub**: [@luckedenn](https://github.com/luckedenn)
 
 ---
