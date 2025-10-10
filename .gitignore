@@ -1,0 +1,22 @@
+# Ignore virtual environment
+venv/
+.env/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Data dan hasil eksperimen
+data/
+results/
+results_*/
+*.png
+*.csv
+*.json
+*.pt
+*.pth
+*.ckpt
+
+# Notebook checkpoints
+.ipynb_checkpoints/
