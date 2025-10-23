@@ -1,0 +1,13 @@
+{
+  "MAE_mean": 2.027493829860646,
+  "MAE_std": 1.099528109940194,
+  "RMSE_mean": 2.4009424478945864,
+  "RMSE_std": 1.2272181112755691,
+  "sMAPE_mean": 14.83446578022536,
+  "sMAPE_std": 6.6846836321371566,
+  "windows": 6,
+  "PDT": 7,
+  "seasonal": false,
+  "m": 1,
+  "fast_mode": true
+}

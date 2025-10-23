@@ -1,0 +1,13 @@
+{
+  "dataset": "co2_maunaloa_monthly",
+  "freq": "M",
+  "prediction_length": 6,
+  "context_length": 24,
+  "n_shots": 6,
+  "MAE_mean": 1.842163408067492,
+  "MAE_std": 0.4089561648419492,
+  "RMSE_mean": 2.1531244394239035,
+  "RMSE_std": 0.4553486020672081,
+  "sMAPE_mean": 0.4355170065735425,
+  "sMAPE_std": 0.09666362605382009
+}

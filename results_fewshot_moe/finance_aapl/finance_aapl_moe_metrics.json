@@ -1,0 +1,13 @@
+{
+  "dataset": "finance_aapl",
+  "freq": "D",
+  "prediction_length": 5,
+  "context_length": 30,
+  "n_shots": 6,
+  "MAE_mean": 4.155234527587893,
+  "MAE_std": 1.7452229701197624,
+  "RMSE_mean": 5.225401030018662,
+  "RMSE_std": 2.0037604324043246,
+  "sMAPE_mean": 1.7137211199073752,
+  "sMAPE_std": 0.686912305488705
+}
