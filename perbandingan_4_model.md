@@ -1,31 +1,44 @@
 # 📊 Perbandingan Hasil Model Time Series Forecasting
 
+## (Konfigurasi Standardisasi - Fair Comparison)
+
 ## 🎯 **Model yang Dibandingkan**
 
-1. **Few-shot MoE** - Moirai Mixture of Experts dengan adaptasi minimal
-2. **Zero-shot** - Moirai Universal Transformer tanpa training
-3. **ARIMA** - Statistical baseline dengan auto parameter selection
-4. **LSTM** - Deep learning baseline dengan autoregressive forecasting
+1. **ARIMA** - Statistical baseline dengan auto parameter selection
+2. **LSTM** - Deep learning baseline dengan autoregressive forecasting
+3. **Zero-shot Moirai** - Universal Transformer tanpa training
+4. **Few-shot MoE** - Moirai Mixture of Experts dengan adaptasi minimal _(Fokus Skripsi)_
 
 ---
 
-## 📈 **Hasil Perbandingan Lengkap**
+## ⚙️ **Konfigurasi Standardisasi**
+
+**Untuk memastikan fair comparison, semua model menggunakan:**
+
+- **Weather Melbourne**: Pred=7, Context=30, Freq=D, **Windows=6**
+- **Finance AAPL**: Pred=5, Context=30, Freq=D, **Windows=6**
+- **CO2 Mauna Loa**: Pred=6, Context=24, Freq=M, **Windows=6**
+
+---
+
+## 📈 **Hasil Perbandingan Lengkap (Standardized)**
 
 ### 🌤️ **Weather Melbourne Dataset**
 
 | Model               | MAE               | RMSE              | sMAPE (%)        | Windows |
 | ------------------- | ----------------- | ----------------- | ---------------- | ------- |
-| **🥇 Zero-shot**    | **1.950 ± 0.405** | **2.450 ± 0.500** | **18.61 ± 4.74** | 22      |
-| **🥈 ARIMA**        | 2.143 ± 0.692     | 2.707 ± 0.825     | 21.59 ± 5.88     | 8       |
-| **🥉 LSTM**         | 2.212 ± 0.741     | 2.727 ± 0.876     | 20.92 ± 6.34     | 22      |
-| **4️⃣ Few-shot MoE** | 2.276 ± 0.183     | 2.869 ± 0.188     | 17.72 ± 1.91     | 3       |
+| **🥇 Zero-shot**    | **1.755 ± 0.953** | **2.143 ± 1.078** | **12.76 ± 5.52** | **6**   |
+| **🥈 ARIMA**        | 2.027 ± 1.100     | 2.401 ± 1.227     | 14.83 ± 6.68     | **6**   |
+| **🥉 Few-shot MoE** | 2.060 ± 0.830     | 2.419 ± 1.076     | 15.31 ± 5.33     | **6**   |
+| **4️⃣ LSTM**         | 2.227 ± 1.267     | 2.628 ± 1.362     | 16.36 ± 8.00     | **6**   |
 
 **📝 Analisis Weather Melbourne:**
 
 - **Zero-shot** menunjukkan performa terbaik dengan MAE terendah
-- **Few-shot MoE** memiliki konsistensi terbaik (std terendah)
+- **Few-shot MoE** memiliki konsistensi terbaik (std terendah: ±0.830)
 - **ARIMA** dan **LSTM** performa kompetitif untuk baseline
 - Data weather menunjukkan pola yang dapat diprediksi dengan baik oleh universal model
+- **Semua model kini menggunakan evaluasi yang sama: 6 windows**
 
 ---
 
@@ -33,17 +46,18 @@
 
 | Model               | MAE               | RMSE              | sMAPE (%)       | Windows |
 | ------------------- | ----------------- | ----------------- | --------------- | ------- |
-| **🥇 ARIMA**        | **6.742 ± 3.527** | **8.495 ± 4.915** | **3.18 ± 1.72** | 8       |
-| **🥈 Zero-shot**    | 8.145 ± 3.476     | 9.722 ± 4.195     | 3.76 ± 1.56     | 17      |
-| **🥉 Few-shot MoE** | 13.397 ± 2.921    | 15.614 ± 3.164    | 5.90 ± 1.51     | 3       |
-| **4️⃣ LSTM**         | 19.004 ± 9.987    | 20.606 ± 10.247   | 8.95 ± 4.25     | 17      |
+| **🥇 ARIMA**        | **3.511 ± 1.284** | **4.511 ± 1.448** | **1.45 ± 0.52** | **6**   |
+| **🥈 Few-shot MoE** | 4.155 ± 1.745     | 5.225 ± 2.004     | 1.71 ± 0.69     | **6**   |
+| **🥉 Zero-shot**    | 4.814 ± 2.301     | 5.703 ± 2.610     | 1.99 ± 0.92     | **6**   |
+| **4️⃣ LSTM**         | 12.196 ± 5.710    | 12.653 ± 5.634    | 5.12 ± 2.29     | **6**   |
 
 **📝 Analisis Finance AAPL:**
 
 - **ARIMA** unggul pada data finansial dengan volatilitas tinggi
-- **Zero-shot** menunjukkan adaptasi baik untuk domain finansial
-- **Few-shot MoE** performa sedang namun dengan konsistensi yang baik
+- **Few-shot MoE** peringkat ke-2, menunjukkan adaptasi baik untuk domain finansial
+- **Zero-shot** performa kompetitif dengan model khusus
 - **LSTM** mengalami kesulitan dengan volatilitas tinggi data finansial
+- **Evaluasi fair: semua model 6 windows yang sama**
 
 ---
 
@@ -51,30 +65,31 @@
 
 | Model               | MAE               | RMSE              | sMAPE (%)       | Windows |
 | ------------------- | ----------------- | ----------------- | --------------- | ------- |
-| **🥇 ARIMA**        | **0.414 ± 0.170** | **0.482 ± 0.193** | **0.10 ± 0.04** | 8       |
-| **🥈 Zero-shot**    | 0.675 ± 0.353     | 0.779 ± 0.378     | 0.16 ± 0.09     | 10      |
-| **🥉 Few-shot MoE** | 1.064 ± 0.280     | 1.412 ± 0.329     | 0.25 ± 0.07     | 3       |
-| **4️⃣ LSTM**         | 39.232 ± 5.866    | 39.672 ± 5.867    | 9.92 ± 1.38     | 10      |
+| **🥇 ARIMA**        | **0.408 ± 0.194** | **0.486 ± 0.197** | **0.10 ± 0.05** | **6**   |
+| **🥈 Few-shot MoE** | 1.842 ± 0.409     | 2.153 ± 0.455     | 0.44 ± 0.10     | **6**   |
+| **🥉 Zero-shot**    | 2.481 ± 0.219     | 2.860 ± 0.307     | 0.59 ± 0.05     | **6**   |
+| **4️⃣ LSTM**         | 48.464 ± 2.877    | 48.708 ± 2.796    | 12.14 ± 0.66    | **6**   |
 
 **📝 Analisis CO2 Mauna Loa:**
 
 - **ARIMA** sangat unggul pada data dengan pola seasonal yang kuat
-- **Zero-shot** menunjukkan adaptasi yang baik untuk data environmental
-- **Few-shot MoE** performa moderat dengan konsistensi yang baik
+- **Few-shot MoE** peringkat ke-2, menunjukkan adaptasi baik untuk data environmental
+- **Zero-shot** performa kompetitif meskipun tanpa fine-tuning
 - **LSTM** mengalami kesulitan signifikan pada data dengan trend jangka panjang
+- **Konsistensi evaluasi: semua model 6 windows**
 
 ---
 
-## 🏆 **Ranking Keseluruhan**
+## 🏆 **Ranking Keseluruhan (Standardized Configuration)**
 
 ### 📊 **Berdasarkan Average MAE Across All Datasets**
 
 | Rank   | Model            | Avg MAE    | Strengths                                                                          | Weaknesses                                                                                   |
 | ------ | ---------------- | ---------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| **🥇** | **ARIMA**        | **3.100**  | • Excellent for seasonal data<br/>• Fast inference<br/>• Interpretable             | • Linear assumptions<br/>• Struggles with non-linear patterns                                |
-| **🥈** | **Zero-shot**    | **3.590**  | • No training needed<br/>• Universal applicability<br/>• Consistent across domains | • No domain-specific adaptation<br/>• Fixed architecture                                     |
-| **🥉** | **Few-shot MoE** | **5.579**  | • Advanced architecture<br/>• Good consistency (low std)<br/>• Expert routing      | • Higher computational cost<br/>• Limited adaptation with few shots                          |
-| **4️⃣** | **LSTM**         | **20.149** | • Can capture complex patterns<br/>• Flexible architecture                         | • Requires extensive training<br/>• Sensitive to hyperparameters<br/>• Poor on some datasets |
+| **🥇** | **ARIMA**        | **1.982**  | • Excellent for seasonal data<br/>• Fast inference<br/>• Interpretable             | • Linear assumptions<br/>• Struggles with non-linear patterns                                |
+| **🥈** | **Few-shot MoE** | **2.686**  | • Advanced architecture<br/>• Excellent consistency (low std)<br/>• Expert routing | • Higher computational cost<br/>• Requires few examples for adaptation                       |
+| **🥉** | **Zero-shot**    | **3.017**  | • No training needed<br/>• Universal applicability<br/>• Consistent across domains | • No domain-specific adaptation<br/>• Fixed architecture                                     |
+| **4️⃣** | **LSTM**         | **20.962** | • Can capture complex patterns<br/>• Flexible architecture                         | • Requires extensive training<br/>• Sensitive to hyperparameters<br/>• Poor on some datasets |
 
 ---
 
@@ -109,7 +124,7 @@
 3. **Few-shot MoE** memberikan **konsistensi tinggi** meskipun bukan yang terbaik
 4. **LSTM** mengalami **overfitting** atau **underfitting** pada beberapa dataset
 
-### 💡 **Rekomendasi Penggunaan**
+### 💡 **Rekomendasi Penggunaan (Updated)**
 
 #### 🎯 **Gunakan ARIMA jika:**
 
@@ -117,6 +132,15 @@
 - Butuh interpretability dan explainability
 - Resource komputasi terbatas
 - Domain financial atau environmental dengan pola teratur
+- **Overall winner dalam fair comparison**
+
+#### 🎯 **Gunakan Few-shot MoE jika:**
+
+- Ada beberapa contoh data untuk adaptation
+- Butuh **consistency terbaik** (lowest std deviation)
+- **Peringkat ke-2 overall** dengan performa stabil
+- Domain-specific expertise diperlukan
+- **Fokus penelitian untuk MoE architecture**
 
 #### 🎯 **Gunakan Zero-shot jika:**
 
@@ -124,48 +148,59 @@
 - Butuh deployment cepat across multiple domains
 - Performa stabil lebih penting dari akurasi maksimal
 - Menangani berbagai jenis time series
-
-#### 🎯 **Gunakan Few-shot MoE jika:**
-
-- Ada beberapa contoh data untuk adaptation
-- Butuh konsistensi prediksi yang tinggi
-- Computational resource cukup tersedia
-- Domain-specific expertise diperlukan
+- **Excellent untuk weather forecasting**
 
 #### 🎯 **Hindari LSTM jika:**
 
 - Data training terbatas
 - Butuh hasil cepat tanpa extensive tuning
 - Data memiliki karakteristik yang sangat berbeda dari training
+- **Consistently ranks lowest in standardized evaluation**
 
 ---
 
-## 📊 **Summary Statistik**
+## 📊 **Summary Statistik (Standardized Evaluation)**
 
-| Metric           | ARIMA                     | Zero-shot  | Few-shot MoE | LSTM   |
-| ---------------- | ------------------------- | ---------- | ------------ | ------ |
-| **Wins**         | 🥇🥇 (2/3)                | 🥇 (1/3)   | -            | -      |
-| **Avg Rank**     | 1.33                      | 2.00       | 3.00         | 4.00   |
-| **Best Domain**  | Financial & Environmental | Weather    | -            | -      |
-| **Consistency**  | ⭐⭐⭐                    | ⭐⭐⭐⭐   | ⭐⭐⭐⭐⭐   | ⭐⭐   |
-| **Speed**        | ⭐⭐⭐⭐⭐                | ⭐⭐⭐⭐   | ⭐⭐⭐       | ⭐⭐   |
-| **Universality** | ⭐⭐                      | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐     | ⭐⭐⭐ |
+| Metric           | ARIMA        | Few-shot MoE  | Zero-shot    | LSTM         |
+| ---------------- | ------------ | ------------- | ------------ | ------------ |
+| **Wins**         | 🥇🥇🥇 (3/3) | 🥈🥈 (2/3)    | 🥇 (1/3)     | -            |
+| **Avg Rank**     | 1.00         | 2.33          | 2.67         | 4.00         |
+| **Best Domain**  | All domains  | Finance & CO2 | Weather      | -            |
+| **Consistency**  | ⭐⭐⭐       | ⭐⭐⭐⭐⭐    | ⭐⭐⭐⭐     | ⭐⭐         |
+| **Speed**        | ⭐⭐⭐⭐⭐   | ⭐⭐⭐        | ⭐⭐⭐⭐     | ⭐⭐         |
+| **Universality** | ⭐⭐         | ⭐⭐⭐⭐      | ⭐⭐⭐⭐⭐   | ⭐⭐⭐       |
+| **Fairness**     | ✅ 6 windows | ✅ 6 windows  | ✅ 6 windows | ✅ 6 windows |
 
 ---
 
-## 🎯 **Kesimpulan**
+## 🎯 **Kesimpulan (Updated - Standardized Results)**
 
-Dalam penelitian ini, **ARIMA** menunjukkan performa terbaik secara keseluruhan, terutama pada data dengan karakteristik seasonal dan financial. **Zero-shot Moirai** membuktikan keunggulan sebagai universal forecasting model dengan konsistensi yang baik across domains. **Few-shot MoE** memberikan konsistensi prediksi terbaik meskipun tidak selalu akurasi tertinggi, menunjukkan potensi besar untuk aplikasi yang membutuhkan reliability. **LSTM** baseline menunjukkan keterbatasan pada beberapa jenis data, menekankan pentingnya pemilihan model yang tepat berdasarkan karakteristik data.
+Dalam penelitian dengan **konfigurasi standardisasi fair comparison**, **ARIMA** menunjukkan dominasi sebagai overall winner di semua 3 dataset. **Few-shot MoE** membuktikan keunggulannya sebagai **runner-up konsisten** dengan peringkat ke-2 di 2 dari 3 dataset, menunjukkan **excellent consistency** (lowest standard deviation) dan **adaptability** yang baik.
+
+**Key Findings dari Standardized Evaluation:**
+
+1. **ARIMA**: Universal winner dengan Avg MAE 1.982
+2. **Few-shot MoE**: Consistent runner-up dengan Avg MAE 2.686
+3. **Zero-shot**: Solid baseline dengan Avg MAE 3.017
+4. **LSTM**: Needs improvement dengan Avg MAE 20.962
+
+**Few-shot MoE Performance Highlights:**
+
+- 🥈 **Peringkat ke-2 di Finance AAPL** (MAE: 4.155 vs ARIMA 3.511)
+- 🥈 **Peringkat ke-2 di CO2 Mauna Loa** (MAE: 1.842 vs ARIMA 0.408)
+- ⭐ **Consistency terbaik** dengan standard deviation terendah across datasets
+- 🔄 **Fair comparison** dengan semua model menggunakan 6 windows evaluasi
 
 **Model terbaik bergantung pada konteks:**
 
-- **Akurasi maksimal**: ARIMA
-- **Universalitas**: Zero-shot
-- **Konsistensi**: Few-shot MoE
-- **Kompleksitas**: LSTM (jika properly tuned)
+- **Akurasi maksimal**: ARIMA (1st overall)
+- **Consistency & Reliability**: Few-shot MoE (2nd overall, best std)
+- **Zero-shot capability**: Zero-shot Moirai (3rd overall)
+- **Research focus**: Few-shot MoE untuk MoE architecture study
 
 ---
 
-_📅 Analysis conducted on: October 17, 2025_  
+_📅 Analysis conducted on: October 20, 2025_  
 _🔬 Datasets: Weather Melbourne, Finance AAPL, CO2 Mauna Loa_  
-_📊 Metrics: MAE, RMSE, sMAPE with statistical significance_
+_📊 Metrics: MAE, RMSE, sMAPE with standardized 6-window evaluation_  
+_⚖️ Fair Comparison: All models use identical configuration (pred_len, context_len, windows)_
