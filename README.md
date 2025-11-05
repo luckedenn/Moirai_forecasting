@@ -39,19 +39,16 @@ Moirai_forecasting/
 │   ├── finance_aapl/                # AAPL stock prices
 │   └── co2_maunaloa_monthly/         # CO2 concentration data
 ├── 🎯 Model Scripts/
-│   ├── run_zeroshot_all.py          # Zero-shot forecasting
-│   ├── run_fewshot.py               # Few-shot learning
-│   └── run_fewshot_moe.py           # MoE few-shot variant
+│   ├── run_zeroshot_all.py          # Zero-shot (Moirai v2)
+│   └── run_fewshot_moe.py           # Few-shot MoE variant
 ├── 📈 Baseline Scripts/
 │   ├── baseline_lstm.py             # LSTM implementation
 │   └── baseline_arima.py            # ARIMA implementation
 ├── 🔧 Utilities/
-│   ├── prepare_dataset.py           # Data preparation
-│   └── zeroshot.py                  # Basic zero-shot demo
+│   └── prepare_dataset.py           # Data preparation (download, standardize, split)
 ├── 📋 Results/
-│   ├── results/                     # Zero-shot outputs
-│   ├── results_fewshot/             # Few-shot outputs
-│   ├── results_fewshot_moe/         # MoE outputs
+│   ├── results_zeroshot/            # Zero-shot outputs
+│   ├── results_fewshot_moe/         # Few-shot MoE outputs
 │   ├── results_baseline_lstm/       # LSTM outputs
 │   └── results_baseline_arima/      # ARIMA outputs
 └── 📚 uni2ts/                       # Moirai model framework
@@ -59,57 +56,48 @@ Moirai_forecasting/
 
 ## 🚀 Quick Start
 
-### 1. Installation
+### 1) Instalasi (Windows PowerShell)
 
-```bash
+```powershell
 # Clone repository
 git clone https://github.com/luckedenn/Moirai_forecasting.git
 cd Moirai_forecasting
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or
-venv\Scripts\activate     # Windows
+# Buat virtual env dan aktifkan
+python -m venv .venv
+./.venv/Scripts/Activate.ps1
 
-# Install dependencies
+# Install dependencies proyek
 pip install -r requirements.txt
 
-# Install uni2ts framework
-cd uni2ts
-pip install -e .
-cd ..
+# (Opsional) Install framework uni2ts dari folder lokal
+pip install -e ./uni2ts
 ```
 
-### 2. Data Preparation
+### 2) Persiapan Data
 
-```bash
-# Download and prepare datasets
+```powershell
+# Unduh dan siapkan dataset (weather, CO₂, AAPL)
 python prepare_dataset.py
 ```
 
-### 3. Run Experiments
+### 3) Menjalankan Eksperimen
 
-#### Zero-Shot Forecasting
+#### Zero-Shot Forecasting (Moirai-2)
 
-```bash
-# Run Moirai universal forecasting
+```powershell
 python run_zeroshot_all.py
 ```
 
-#### Few-Shot Learning
+#### Few-Shot MoE (Moirai-MoE)
 
-```bash
-# Standard few-shot
-python run_fewshot.py
-
-# Mixture of Experts variant
+```powershell
 python run_fewshot_moe.py
 ```
 
 #### Baseline Methods
 
-```bash
+```powershell
 # LSTM baseline
 python baseline_lstm.py
 

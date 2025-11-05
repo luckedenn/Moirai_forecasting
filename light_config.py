@@ -1,6 +1,3 @@
-# Konfigurasi Standar Ringan untuk Semua Model
-# Digunakan untuk memastikan perbandingan yang fair dan tidak berat komputasi
-
 STANDARD_CONFIG = {
     # Dataset configurations yang ringan dan konsisten dengan WINDOWS SERAGAM
     "weather_melbourne": {
