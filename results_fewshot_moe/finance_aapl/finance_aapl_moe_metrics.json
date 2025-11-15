@@ -2,12 +2,12 @@
   "dataset": "finance_aapl",
   "freq": "D",
   "prediction_length": 5,
-  "context_length": 30,
+  "context_length": 120,
   "n_shots": 6,
-  "MAE_mean": 4.155234527587893,
-  "MAE_std": 1.7452229701197624,
-  "RMSE_mean": 5.225401030018662,
-  "RMSE_std": 2.0037604324043246,
-  "sMAPE_mean": 1.7137211199073752,
-  "sMAPE_std": 0.686912305488705
+  "MAE_mean": 3.556689707438153,
+  "MAE_std": 0.8334813076646277,
+  "RMSE_mean": 4.384701878224769,
+  "RMSE_std": 0.9669008461351537,
+  "sMAPE_mean": 1.4689565356744592,
+  "sMAPE_std": 0.3139082972750921
 }

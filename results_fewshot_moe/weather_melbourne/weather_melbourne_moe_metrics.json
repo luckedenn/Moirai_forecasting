@@ -2,12 +2,12 @@
   "dataset": "weather_melbourne",
   "freq": "D",
   "prediction_length": 7,
-  "context_length": 30,
+  "context_length": 120,
   "n_shots": 6,
-  "MAE_mean": 2.059584140777588,
-  "MAE_std": 0.8297075450828593,
-  "RMSE_mean": 2.4190833697228427,
-  "RMSE_std": 1.0756764871160744,
-  "sMAPE_mean": 15.314718283610214,
-  "sMAPE_std": 5.327618837576702
+  "MAE_mean": 1.89849807875497,
+  "MAE_std": 0.851889151237251,
+  "RMSE_mean": 2.3568262336870367,
+  "RMSE_std": 0.9055221625661982,
+  "sMAPE_mean": 13.909692884163901,
+  "sMAPE_std": 4.808178147984603
 }
