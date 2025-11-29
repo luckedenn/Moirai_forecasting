@@ -308,20 +308,68 @@ def run_one_dataset(
     print(f"   • RMSE: {metrics['RMSE_mean']:.4f} ± {metrics['RMSE_std']:.4f}")
     print(f"   • sMAPE: {metrics['sMAPE_mean']:.2f}% ± {metrics['sMAPE_std']:.2f}%")
 
-    # Plot last window
+    # Plot last window (manual style: median + uncertainty fan to match other models)
     try:
-        plt.figure()
-        plot_single(
-            last_inp,
-            last_label,
-            last_forecast,
-            context_length=min(ctx, len(last_inp)),
-            name=f"{name}_last_window",
-            show_label=True,
-        )
+        if last_label is None or last_forecast is None:
+            raise ValueError("No last window payload available for plotting")
+
+        # Extract ground truth
+        y_true = safe_to_float_array(last_label)[:pdt]
+
+        # Extract forecast median and uncertainty if available
+        if hasattr(last_forecast, "samples") and last_forecast.samples is not None:
+            samples = np.asarray(last_forecast.samples, dtype=np.float64)
+            q10 = np.quantile(samples, 0.10, axis=0)
+            q50 = np.quantile(samples, 0.50, axis=0)
+            q90 = np.quantile(samples, 0.90, axis=0)
+        else:
+            # Fallback to quantile API
+            q10 = safe_to_float_array(last_forecast.quantile(0.1))[:pdt]
+            q50 = safe_to_float_array(last_forecast.quantile(0.5))[:pdt]
+            q90 = safe_to_float_array(last_forecast.quantile(0.9))[:pdt]
+
+        # Align lengths
+        min_len = min(len(y_true), len(q50), pdt)
+        y_true = y_true[:min_len]
+        q10 = q10[:min_len]
+        q50 = q50[:min_len]
+        q90 = q90[:min_len]
+
+        # Attempt to compute timestamp index for the last window
+        try:
+            start_date = last_forecast.start_date
+            if hasattr(start_date, "to_timestamp"):
+                start_ts = start_date.to_timestamp()
+            elif hasattr(start_date, 'to_pydatetime'):
+                start_ts = pd.Timestamp(start_date.to_pydatetime())
+            else:
+                start_ts = pd.Timestamp(start_date)
+        except Exception:
+            start_ts = df['timestamp'].iloc[len(df) - TEST]
+
+        try:
+            ts_idx = pd.date_range(start=start_ts, periods=min_len, freq=freq)
+        except Exception:
+            ts_idx = pd.date_range(start=start_ts, periods=min_len, freq='D')
+
+        plt.figure(figsize=(10, 4))
+        plt.plot(ts_idx, y_true, label='Ground Truth', linewidth=2)
+        plt.plot(ts_idx, q50, label='Median (q50)', linewidth=2)
+        # Draw uncertainty fan when available
+        try:
+            plt.fill_between(ts_idx, q10, q90, color='C1', alpha=0.2, label='Uncertainty (q10–q90)')
+        except Exception:
+            pass
+
+        plt.title(f"{name} — Zero-shot (last window)")
+        plt.xlabel('Timestamp')
+        plt.ylabel('Value')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
         plt.tight_layout()
         plt.savefig(os.path.join(outdir, f"{name}_last_window.png"), dpi=150)
         plt.close()
+        print(f"📊 Plot saved: {outdir}/{name}_last_window.png")
     except Exception as e:
         print(f"   ⚠️ Warning: Could not create plot: {e}")
     
@@ -357,6 +405,13 @@ DATASETS = [
         "PDT": STANDARD_CONFIG["co2_maunaloa_monthly"]["pred_len"],
         "CTX": STANDARD_CONFIG["co2_maunaloa_monthly"]["context_len"],
         "FREQ": STANDARD_CONFIG["co2_maunaloa_monthly"]["freq"],
+    },
+    {
+        "name": "etth1",
+        "csv": STANDARD_CONFIG["etth1"]["csv"],
+        "PDT": STANDARD_CONFIG["etth1"]["pred_len"],
+        "CTX": STANDARD_CONFIG["etth1"]["context_len"],
+        "FREQ": STANDARD_CONFIG["etth1"]["freq"],
     },
 ]
 

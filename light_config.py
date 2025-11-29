@@ -3,31 +3,41 @@ STANDARD_CONFIG = {
     "weather_melbourne": {
         "csv": "data/weather_melbourne/weather_melbourne_full.csv",
         "pred_len": 7,          # 1 week forecast (natural unit untuk weather)
-        "context_len": 120,     # 4 bulan context (120 hari) - SERAGAM
+        "context_len": 120,     # 4 bulan context (240 hari) - SERAGAM
         "freq": "D",
         "lookback": 60,         # 2 bulan lookback - SERAGAM: 60 timesteps
-        "n_shots": 6,           # SERAGAM: 6 windows untuk semua model
-        "max_windows": 6        # SERAGAM: maksimal 6 windows untuk evaluasi
+        "n_shots": 3,           # SERAGAM: 6 windows untuk semua model
+        "max_windows": 3        # SERAGAM: maksimal 6 windows untuk evaluasi
     },
     
     "finance_aapl": {
         "csv": "data/finance_aapl/finance_aapl_full.csv",
         "pred_len": 5,          # 1 week trading forecast (5 hari kerja)
-        "context_len": 120,     # 120 hari trading (~6 bulan) - SERAGAM
+        "context_len": 120,     # 240 hari trading (~6 bulan) - SERAGAM
         "freq": "D",            # gunakan daily untuk konsistensi
         "lookback": 60,         # 60 hari trading (~3 bulan) - SERAGAM: 60 timesteps
-        "n_shots": 6,           # SERAGAM: 6 windows untuk semua model
-        "max_windows": 6        # SERAGAM: maksimal 6 windows
+        "n_shots": 3,           # SERAGAM: 6 windows untuk semua model
+        "max_windows": 3        # SERAGAM: maksimal 6 windows
     },
     
     "co2_maunaloa_monthly": {
         "csv": "data/co2_maunaloa_monthly/co2_maunaloa_monthly_full.csv", 
         "pred_len": 6,          # 6 months forecast (half year)
-        "context_len": 120,     # 10 tahun context (120 bulan) - SERAGAM
+        "context_len": 120,     # 10 tahun context (240 bulan) - SERAGAM
         "freq": "M",
         "lookback": 60,         # 5 tahun lookback (60 bulan) - SERAGAM: 60 timesteps
-        "n_shots": 6,           # SERAGAM: 6 windows untuk semua model  
-        "max_windows": 6        # SERAGAM: maksimal 6 windows (cukup untuk monthly data)
+        "n_shots": 3,           # SERAGAM: 6 windows untuk semua model  
+        "max_windows": 3        # SERAGAM: maksimal 6 windows (cukup untuk monthly data)
+    },
+    
+    "etth1": {
+        "csv": "data/etth1/etth1_full.csv",
+        "pred_len": 96,         # 24 hours forecast (1 day)
+        "context_len": 336,     # 120 hours context (5 days) - SERAGAM
+        "freq": "H",            # hourly data
+        "lookback": 336,         # 60 hours lookback - SERAGAM: 60 timesteps
+        "n_shots": 24,          # SERAGAM: 6 windows untuk semua model
+        "max_windows": 24       # SERAGAM: maksimal 6 windows
     }
 }
 
@@ -45,7 +55,7 @@ LIGHT_TRAINING_CONFIG = {
     # ARIMA parameters (fast mode)
     "arima": {
         "fast_mode": True,
-        "max_windows": 6,       # batasi windows
+        "max_windows": 3,       # batasi windows
         "max_p": 2,             # reduced dari 3
         "max_q": 2,             # reduced dari 3
         "max_P": 1,
@@ -56,7 +66,7 @@ LIGHT_TRAINING_CONFIG = {
     # Moirai parameters
     "moirai": {
         "batch_size": 8,        # small batch untuk ringan
-        "num_samples": 50       # reduced dari 100 untuk MoE
+        "num_samples": 200       
     }
 }
 

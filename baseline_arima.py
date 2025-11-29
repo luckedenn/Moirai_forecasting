@@ -176,60 +176,38 @@ def rolling_forecast_arima(series: pd.Series, pdt: int, frac_test: float = 0.15,
 
 def plot_arima_results(df_predictions: pd.DataFrame, name: str, outdir: str):
     """
-    Plot hasil prediksi ARIMA untuk beberapa windows terbaik
+    Plot hasil prediksi ARIMA - Last Window Only
     """
-    # Hitung metrik untuk setiap window
+    # Ambil last window saja (seperti zero-shot dan few-shot)
     windows = df_predictions['window'].unique()
-    window_metrics = []
+    last_window_idx = max(windows)
     
-    for w in windows:
-        window_data = df_predictions[df_predictions['window'] == w]
-        w_mae = mae(window_data['y_true'].values, window_data['y_pred'].values)
-        window_metrics.append((w, w_mae))
+    window_data = df_predictions[df_predictions['window'] == last_window_idx].copy()
+    window_data = window_data.sort_values('timestamp')
     
-    # Sort by MAE dan ambil 4 windows terbaik
-    window_metrics.sort(key=lambda x: x[1])
-    best_windows = [w for w, _ in window_metrics[:4]]
-    
-    # Plot
-    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-    axes = axes.flatten()
-    
-    for i, window_idx in enumerate(best_windows):
-        if i >= 4:
-            break
-            
-        window_data = df_predictions[df_predictions['window'] == window_idx].copy()
-        window_data = window_data.sort_values('timestamp')
+    if len(window_data) > 0:
+        plt.figure(figsize=(10, 4))
+        plt.plot(window_data['timestamp'], window_data['y_true'], 
+                label='Ground Truth', linewidth=2)
+        plt.plot(window_data['timestamp'], window_data['y_pred'], 
+                label='ARIMA Prediction', linewidth=2, alpha=0.8)
         
-        if len(window_data) > 0:
-            axes[i].plot(window_data['timestamp'], window_data['y_true'], 
-                        'o-', label='Ground Truth', linewidth=2, markersize=6)
-            axes[i].plot(window_data['timestamp'], window_data['y_pred'], 
-                        's--', label='ARIMA Pred', linewidth=2, markersize=6, alpha=0.8)
-            
-            # Hitung metrik untuk window ini
-            w_mae = mae(window_data['y_true'].values, window_data['y_pred'].values)
-            w_smape = smape(window_data['y_true'].values, window_data['y_pred'].values)
-            
-            axes[i].set_title(f'Window {window_idx+1} (MAE: {w_mae:.3f}, sMAPE: {w_smape:.1f}%)', 
-                            fontweight='bold')
-            axes[i].set_xlabel('Time')
-            axes[i].set_ylabel('Value')
-            axes[i].legend()
-            axes[i].grid(True, alpha=0.3)
-            axes[i].tick_params(axis='x', rotation=45)
-    
-    # Hide unused subplots
-    for i in range(len(best_windows), 4):
-        axes[i].set_visible(False)
-    
-    plt.suptitle(f'ARIMA Baseline Results - {name.upper()}', fontsize=14, fontweight='bold')
-    plt.tight_layout()
-    plt.savefig(os.path.join(outdir, f'{name}_arima_forecast.png'), dpi=150, bbox_inches='tight')
-    plt.close()
-    
-    print(f"📊 Plot saved: {outdir}/{name}_arima_forecast.png")
+        # Hitung metrik untuk window ini
+        w_mae = mae(window_data['y_true'].values, window_data['y_pred'].values)
+        w_smape = smape(window_data['y_true'].values, window_data['y_pred'].values)
+        
+        plt.title(f'{name} — ARIMA Baseline (last window)', fontweight='bold')
+        plt.xlabel('Timestamp')
+        plt.ylabel('Value')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(os.path.join(outdir, f'{name}_arima_last_window.png'), dpi=150)
+        plt.close()
+        
+        print(f"📊 Plot saved: {outdir}/{name}_arima_last_window.png")
+    else:
+        print(f"⚠️ Warning: No data for last window {last_window_idx+1}")
 
 
 # ============== Runner per Dataset ==============
@@ -273,6 +251,8 @@ if __name__ == "__main__":
          STANDARD_CONFIG["finance_aapl"]["freq"], STANDARD_CONFIG["finance_aapl"]["pred_len"]),
         ("co2_maunaloa_monthly", STANDARD_CONFIG["co2_maunaloa_monthly"]["csv"], 
          STANDARD_CONFIG["co2_maunaloa_monthly"]["freq"], STANDARD_CONFIG["co2_maunaloa_monthly"]["pred_len"]),
+        ("etth1", STANDARD_CONFIG["etth1"]["csv"], 
+         STANDARD_CONFIG["etth1"]["freq"], STANDARD_CONFIG["etth1"]["pred_len"]),
     ]
 
     ensure_dir("results_baseline_arima")

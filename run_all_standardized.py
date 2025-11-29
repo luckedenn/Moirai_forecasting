@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from light_config import STANDARD_CONFIG, LIGHT_TRAINING_CONFIG, EVAL_CONFIG
+from light_config import STANDARD_CONFIG, LIGHT_TRAINING_CONFIG
 
 def run_command(command, description):
     """Jalankan command dan tampilkan progress"""
@@ -67,9 +67,9 @@ def show_config_summary():
           f"num_samples={LIGHT_TRAINING_CONFIG['moirai']['num_samples']}")
     
     print(f"\nEVALUATION CONFIG:")
-    print(f"  - Test fraction: {EVAL_CONFIG['test_fraction']}")
-    print(f"  - Min windows: {EVAL_CONFIG['min_test_windows']}")
-    print(f"  - Max windows: {EVAL_CONFIG['max_test_windows']}")
+    print(f"  - Standardized windows: 6 for all models")
+    print(f"  - Test fraction: ~15%")
+    print(f"  - Rolling window evaluation")
 
 def main():
     """Main function untuk menjalankan semua model"""
