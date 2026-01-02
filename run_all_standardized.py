@@ -12,7 +12,6 @@ from datetime import datetime
 from light_config import STANDARD_CONFIG, LIGHT_TRAINING_CONFIG
 
 def run_command(command, description):
-    """Jalankan command dan tampilkan progress"""
     print(f"\n{'='*60}")
     print(f"[RUNNING] {description}")
     print(f"{'='*60}")
@@ -40,7 +39,6 @@ def run_command(command, description):
         return False
 
 def show_config_summary():
-    """Tampilkan ringkasan konfigurasi yang akan digunakan"""
     print("="*60)
     print("KONFIGURASI STANDAR RINGAN")
     print("="*60)
@@ -72,7 +70,6 @@ def show_config_summary():
     print(f"  - Rolling window evaluation")
 
 def main():
-    """Main function untuk menjalankan semua model"""
     
     print("STANDARDIZED MODEL COMPARISON")
     print("Konfigurasi seragam dan ringan untuk fair comparison")

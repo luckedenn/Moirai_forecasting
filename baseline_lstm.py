@@ -13,6 +13,10 @@ from sklearn.preprocessing import StandardScaler
 
 from light_config import STANDARD_CONFIG, LIGHT_TRAINING_CONFIG
 
+# Device configuration
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("🚀 Using device:", DEVICE)
+
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -233,7 +237,7 @@ def run_one_dataset(
         hidden_size=hidden_size,
         num_layers=num_layers,
         lr=lr,
-        device=device
+        device=str(DEVICE),
     )
 
     rows = []
@@ -310,9 +314,9 @@ def plot_lstm_results(df_predictions: pd.DataFrame, name: str, outdir: str, tota
     if len(window_data) > 0:
         plt.figure(figsize=(10, 4))
         plt.plot(window_data["timestamp"], window_data["y_true"], label="Ground Truth", linewidth=2)
-        plt.plot(window_data["timestamp"], window_data["y_pred"], label="LSTM Prediction", linewidth=2, alpha=0.85)
+        plt.plot(window_data["timestamp"], window_data["y_pred"], label="LSTM Prediction", linewidth=2, alpha=0.80)
 
-        plt.title(f"{name} — LSTM Multi-step Baseline (last window)")
+        plt.title(f"{name} - LSTM Multi-step Baseline (last window)")
         plt.xlabel("Timestamp")
         plt.ylabel("Value")
         plt.legend()
@@ -350,11 +354,6 @@ if __name__ == "__main__":
          STANDARD_CONFIG["co2_maunaloa_monthly"]["pred_len"],
          STANDARD_CONFIG["co2_maunaloa_monthly"]["context_len"]),
 
-        ("etth1",
-         STANDARD_CONFIG["etth1"]["csv"],
-         STANDARD_CONFIG["etth1"]["freq"],
-         STANDARD_CONFIG["etth1"]["pred_len"],
-         STANDARD_CONFIG["etth1"]["context_len"]),
     ]
 
     ensure_dir("results_baseline_lstm")

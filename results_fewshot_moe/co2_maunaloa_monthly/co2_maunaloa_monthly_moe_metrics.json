@@ -3,18 +3,15 @@
   "freq": "M",
   "prediction_length": 6,
   "context_length": 120,
-  "n_shots": 3,
-  "MAE_mean": 0.5728433905707454,
-  "MAE_std": 0.2914754204686963,
-  "RMSE_mean": 0.6631868983149785,
-  "RMSE_std": 0.2610096474098093,
-  "sMAPE_mean": 0.13463223381315054,
-  "sMAPE_std": 0.06889907866349751,
-  "finetuning_info": {
-    "method": "true_few_shot_learning",
-    "n_shots_for_finetuning": 3,
-    "finetune_epochs": 5,
-    "finetune_lr": 0.0001,
-    "description": "Model was fine-tuned on few-shot examples before prediction"
+  "n_shots": 6,
+  "MAE_mean": 0.6622478193118154,
+  "MAE_std": 0.44438751179308594,
+  "sMAPE_mean": 0.15669328675415592,
+  "sMAPE_std": 0.10566979970494164,
+  "calibration_info": {
+    "method": "few_shot_bias_calibration",
+    "n_shots_for_calibration": 6,
+    "bias_correction": 0.09657253689236395,
+    "description": "Model predictions calibrated using bias computed from few-shot examples"
   }
 }

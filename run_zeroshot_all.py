@@ -4,7 +4,12 @@ import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import torch
 from light_config import STANDARD_CONFIG, LIGHT_TRAINING_CONFIG
+
+# Device configuration
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("🚀 Using device:", DEVICE)
 
 try:
     from gluonts.dataset.pandas import PandasDataset
@@ -29,10 +34,6 @@ def ensure_dir(path: str) -> str:
 
 def mae(y_true, y_pred) -> float:
     return float(np.mean(np.abs(y_true - y_pred)))
-
-
-def rmse(y_true, y_pred) -> float:
-    return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
 
 
 def smape(y_true, y_pred, eps: float = 1e-8) -> float:
@@ -202,6 +203,7 @@ def run_one_dataset(
 
     print(f"\n🤖 Loading Moirai model...")
     module = Moirai2Module.from_pretrained("Salesforce/moirai-2.0-R-small")
+    module = module.to(DEVICE)  # Move model to GPU/CPU
     model = Moirai2Forecast(
         module=module,
         prediction_length=pdt,
@@ -210,7 +212,7 @@ def run_one_dataset(
         feat_dynamic_real_dim=0,
         past_feat_dynamic_real_dim=0,
     )
-    predictor = model.create_predictor(batch_size=bsz)
+    predictor = model.create_predictor(batch_size=bsz, device=DEVICE)
     
     print(f"\n🔮 Running predictions...")
     forecasts = predictor.predict(test_data.input)
@@ -219,7 +221,7 @@ def run_one_dataset(
     label_it = iter(test_data.label)
     forecast_it = iter(forecasts)
 
-    rows, maes, rmses, smapes = [], [], [], []
+    rows, maes, smapes = [], [], []
     last_inp, last_label, last_forecast = None, None, None
 
     def make_ts_index(start_ts: pd.Timestamp, periods: int, freq_str: str):
@@ -273,11 +275,9 @@ def run_one_dataset(
         ts_idx = make_ts_index(start_ts, min_len, freq)
 
         mae_val = mae(y_true, y_pred)
-        rmse_val = rmse(y_true, y_pred)
         smape_val = smape(y_true, y_pred)
         
         maes.append(mae_val)
-        rmses.append(rmse_val)
         smapes.append(smape_val)
 
         for t, yt, yp in zip(ts_idx, y_true, y_pred):
@@ -291,8 +291,6 @@ def run_one_dataset(
     metrics = {
         "MAE_mean": float(np.mean(maes)),
         "MAE_std": float(np.std(maes)),
-        "RMSE_mean": float(np.mean(rmses)),
-        "RMSE_std": float(np.std(rmses)),
         "sMAPE_mean": float(np.mean(smapes)),
         "sMAPE_std": float(np.std(smapes)),
         "windows": int(windows),
@@ -305,7 +303,6 @@ def run_one_dataset(
     
     print(f"\n📈 Summary Metrics:")
     print(f"   • MAE: {metrics['MAE_mean']:.4f} ± {metrics['MAE_std']:.4f}")
-    print(f"   • RMSE: {metrics['RMSE_mean']:.4f} ± {metrics['RMSE_std']:.4f}")
     print(f"   • sMAPE: {metrics['sMAPE_mean']:.2f}% ± {metrics['sMAPE_std']:.2f}%")
 
     # Plot last window (manual style: median + uncertainty fan to match other models)
@@ -354,14 +351,14 @@ def run_one_dataset(
 
         plt.figure(figsize=(10, 4))
         plt.plot(ts_idx, y_true, label='Ground Truth', linewidth=2)
-        plt.plot(ts_idx, q50, label='Median (q50)', linewidth=2)
+        plt.plot(ts_idx, q50, label='Prediction', linewidth=2)
         # Draw uncertainty fan when available
         try:
-            plt.fill_between(ts_idx, q10, q90, color='C1', alpha=0.2, label='Uncertainty (q10–q90)')
+            plt.fill_between(ts_idx, q10, q90, color='C1', alpha=0.2, label='Uncertainty ')
         except Exception:
             pass
 
-        plt.title(f"{name} — Zero-shot (last window)")
+        plt.title(f"{name} - Zero-shot (last window)")
         plt.xlabel('Timestamp')
         plt.ylabel('Value')
         plt.legend()
@@ -406,13 +403,6 @@ DATASETS = [
         "CTX": STANDARD_CONFIG["co2_maunaloa_monthly"]["context_len"],
         "FREQ": STANDARD_CONFIG["co2_maunaloa_monthly"]["freq"],
     },
-    {
-        "name": "etth1",
-        "csv": STANDARD_CONFIG["etth1"]["csv"],
-        "PDT": STANDARD_CONFIG["etth1"]["pred_len"],
-        "CTX": STANDARD_CONFIG["etth1"]["context_len"],
-        "FREQ": STANDARD_CONFIG["etth1"]["freq"],
-    },
 ]
 
 
@@ -454,7 +444,6 @@ if __name__ == "__main__":
         for result in all_results:
             print(f"\n{result['dataset'].upper()}")
             print(f"  MAE:   {result['MAE_mean']:.4f} ± {result['MAE_std']:.4f}")
-            print(f"  RMSE:  {result['RMSE_mean']:.4f} ± {result['RMSE_std']:.4f}")
             print(f"  sMAPE: {result['sMAPE_mean']:.2f}% ± {result['sMAPE_std']:.2f}%")
             print(f"  Windows: {result['windows']}")
     

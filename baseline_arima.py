@@ -29,9 +29,6 @@ def smape(y, yhat, eps: float = 1e-8) -> float:
     return float(np.mean(num / den) * 100.0)
 
 def choose_test_len(total_len: int, pdt: int, frac: float = 0.15, max_windows: int = 10) -> int:
-    """
-    Pilih test length dengan batasan maksimal windows untuk mempercepat
-    """
     raw = max(pdt, int(total_len * frac))
     test = (raw // pdt) * pdt
     
@@ -44,10 +41,6 @@ def choose_test_len(total_len: int, pdt: int, frac: float = 0.15, max_windows: i
 
 # ============== Data Loading ==============
 def load_series(csv_path: str, freq: str) -> Tuple[pd.Series, str]:
-    """
-    Baca CSV [timestamp,value], set index waktu & frekuensi stabil, ffill.
-    Kembalikan (series, use_freq)
-    """
     df = pd.read_csv(csv_path, parse_dates=["timestamp"])
     df["value"] = pd.to_numeric(df["value"], errors="coerce")
     df = df.dropna(subset=["timestamp", "value"]).sort_values("timestamp")
@@ -72,12 +65,6 @@ def load_series(csv_path: str, freq: str) -> Tuple[pd.Series, str]:
 
 # ============== Musiman Otomatis ==============
 def seasonal_setup(use_freq: str) -> Tuple[bool, int]:
-    """
-    Tentukan apakah seasonal dan periode musiman (m) berdasarkan frekuensi.
-    - M (bulanan): m=12
-    - D (harian): m=7 (mingguan) - tapi bisa disable untuk kecepatan
-    - B (hari kerja): m=5 (pekan kerja)
-    """
     if use_freq == "M":
         return True, 12
     if use_freq == "D":
@@ -89,7 +76,7 @@ def seasonal_setup(use_freq: str) -> Tuple[bool, int]:
 
 
 # ============== Rolling Forecast dengan auto_arima (Fast Version) ==============
-def rolling_forecast_arima(series: pd.Series, pdt: int, frac_test: float = 0.15, fast_mode: bool = True, max_windows: int = None):
+def rolling_forecast_arima(series: pd.Series, pdt: int, frac_test: float = 0.15, fast_mode: bool = True, max_windows: int = None, lookback: int | None = None):
     n = len(series)
     
     # Gunakan max_windows dari parameter atau default 8 jika fast_mode
@@ -110,9 +97,14 @@ def rolling_forecast_arima(series: pd.Series, pdt: int, frac_test: float = 0.15,
     for w in range(windows):
         print(f"[ARIMA] Processing window {w+1}/{windows}...", end=" ")
         
-        # Gunakan semua data sampai awal window sebagai histori
+        # Gunakan lookback tetap (setara dengan context_len) untuk keadilan antarmodel
         end = len(train) + w * pdt
-        hist = series.iloc[:end]
+        if lookback is not None and lookback > 0:
+            start = max(0, end - lookback)
+            hist = series.iloc[start:end]
+        else:
+            # fallback: gunakan semua histori jika lookback tidak disediakan
+            hist = series.iloc[:end]
 
         # Fit ARIMA pada histori (optimasi untuk kecepatan)
         # Import parameter ringan
@@ -196,7 +188,7 @@ def plot_arima_results(df_predictions: pd.DataFrame, name: str, outdir: str):
         w_mae = mae(window_data['y_true'].values, window_data['y_pred'].values)
         w_smape = smape(window_data['y_true'].values, window_data['y_pred'].values)
         
-        plt.title(f'{name} — ARIMA Baseline (last window)', fontweight='bold')
+        plt.title(f'{name} - ARIMA Baseline (last window)')
         plt.xlabel('Timestamp')
         plt.ylabel('Value')
         plt.legend()
@@ -216,14 +208,25 @@ def run_arima(name: str, csv: str, freq: str, pdt: int, outdir_root: str = "resu
     series, use_freq = load_series(csv, freq)
 
     print("\n" + "=" * 60)
-    print(f"🚀 ARIMA BASELINE — {name.upper()}")
+    print(f"🚀 ARIMA BASELINE - {name.upper()}")
     print("=" * 60)
     print(f"📂 Range: {series.index.min().date()} → {series.index.max().date()} | freq={use_freq}")
     print(f"🔧 Horizon (PDT): {pdt} | Fast mode: {fast_mode}")
 
-    # Gunakan max_windows dari konfigurasi standar
-    max_windows_config = STANDARD_CONFIG.get(name, {}).get("max_windows", 8)
-    rows, metrics = rolling_forecast_arima(series, pdt=pdt, frac_test=0.15, fast_mode=fast_mode, max_windows=max_windows_config)
+    # Gunakan konfigurasi standar
+    from light_config import STANDARD_CONFIG
+    cfg = STANDARD_CONFIG.get(name, {})
+    max_windows_config = cfg.get("max_windows", 8)
+    # Set lookback agar setara dengan context_len jika tersedia; fallback ke cfg.get('lookback')
+    lookback = cfg.get("context_len", cfg.get("lookback", None))
+    rows, metrics = rolling_forecast_arima(
+        series,
+        pdt=pdt,
+        frac_test=0.15,
+        fast_mode=fast_mode,
+        max_windows=max_windows_config,
+        lookback=lookback,
+    )
 
     # Simpan hasil
     df_predictions = pd.DataFrame(rows)
@@ -251,8 +254,6 @@ if __name__ == "__main__":
          STANDARD_CONFIG["finance_aapl"]["freq"], STANDARD_CONFIG["finance_aapl"]["pred_len"]),
         ("co2_maunaloa_monthly", STANDARD_CONFIG["co2_maunaloa_monthly"]["csv"], 
          STANDARD_CONFIG["co2_maunaloa_monthly"]["freq"], STANDARD_CONFIG["co2_maunaloa_monthly"]["pred_len"]),
-        ("etth1", STANDARD_CONFIG["etth1"]["csv"], 
-         STANDARD_CONFIG["etth1"]["freq"], STANDARD_CONFIG["etth1"]["pred_len"]),
     ]
 
     ensure_dir("results_baseline_arima")

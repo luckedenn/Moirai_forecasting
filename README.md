@@ -1,19 +1,19 @@
-# 🚀 Moirai Time Series Forecasting
+# 🚀 Time Series Forecasting dengan Moirai, LSTM, dan ARIMA
 
 [![Framework](https://img.shields.io/badge/Framework-GluonTS%20%7C%20PyTorch-orange.svg)](https://ts.gluon.ai/)
 [![Model](https://img.shields.io/badge/Model-Moirai%20%7C%20LSTM%20%7C%20ARIMA-red.svg)](https://github.com/SalesforceAIResearch/uni2ts)
 
-> **Comprehensive Time Series Forecasting Framework** menggunakan Moirai Universal Transformer dan baseline methods untuk prediksi multi-domain time series data.
+> **Framework Komprehensif untuk Forecasting Time Series** menggunakan Moirai Universal Transformer, LSTM, dan ARIMA pada multi-domain datasets (Weather, Finance, Environmental).
 
 ## 📊 Overview
 
-Repository ini mengimplementasikan sistem forecasting yang komprehensif dengan berbagai metode state-of-the-art:
+Repository ini mengimplementasikan sistem forecasting lengkap dengan perbandingan fair antar berbagai metode state-of-the-art:
 
-- **🎯 Zero-Shot Forecasting**: Moirai Universal Transformer (v1, v2, MoE)
-- **🎪 Few-Shot Forecasting**: Adaptasi model dengan minimal data
-- **🤖 Deep Learning Baseline**: LSTM dengan autoregressive forecasting
+- **🎯 Zero-Shot Forecasting**: Moirai v2 - prediksi tanpa training
+- **🎪 Few-Shot Forecasting**: Moirai-MoE - adaptasi model dengan data minimal (6 examples)
+- **🤖 Deep Learning Baseline**: LSTM multi-layer dengan autoregressive forecasting
 - **📈 Statistical Baseline**: ARIMA dengan automatic parameter selection
-- **📋 Multi-Domain Evaluation**: Weather, Finance, Environmental data
+- **📊 Standardized Evaluation**: Perbandingan fair dengan konfigurasi seragam untuk semua model
 
 ## 🏗️ Architecture
 
@@ -21,37 +21,45 @@ Repository ini mengimplementasikan sistem forecasting yang komprehensif dengan b
 graph LR
     A[Raw Data] --> B[Preprocessing]
     B --> C{Model Selection}
-    C -->|Universal| D[Moirai Models]
-    C -->|Deep Learning| E[LSTM Baseline]
-    C -->|Statistical| F[ARIMA Baseline]
-    D --> G[Evaluation]
-    E --> G
-    F --> G
-    G --> H[Results & Plots]
+    C -->|Zero-Shot| D[Moirai v2]
+    C -->|Few-Shot| E[Moirai-MoE]
+    C -->|Deep Learning| F[LSTM Baseline]
+    C -->|Statistical| G[ARIMA Baseline]
+    D --> H[Standardized Evaluation]
+    E --> H
+    F --> H
+    G --> H
+    H --> I[Comparison & Analysis]
 ```
 
 ## 📁 Project Structure
 
 ```
-Moirai_forecasting/
-├── 📊 data/                          # Datasets
-│   ├── weather_melbourne/            # Daily temperature data
-│   ├── finance_aapl/                # AAPL stock prices
-│   └── co2_maunaloa_monthly/         # CO2 concentration data
+forecast/
+├── 📊 data/                              # Datasets
+│   ├── weather_melbourne/                # Daily temperature (10 years)
+│   ├── finance_aapl/                    # AAPL stock prices (10+ years)
+│   └── co2_maunaloa_monthly/             # CO2 concentration (67 years)
 ├── 🎯 Model Scripts/
-│   ├── run_zeroshot_all.py          # Zero-shot (Moirai v2)
-│   └── run_fewshot_moe.py           # Few-shot MoE variant
+│   ├── run_zeroshot_all.py              # Zero-shot Moirai v2
+│   └── run_fewshot_moe.py               # Few-shot Moirai-MoE
 ├── 📈 Baseline Scripts/
-│   ├── baseline_lstm.py             # LSTM implementation
-│   └── baseline_arima.py            # ARIMA implementation
-├── 🔧 Utilities/
-│   └── prepare_dataset.py           # Data preparation (download, standardize, split)
+│   ├── baseline_lstm.py                 # LSTM implementation
+│   └── baseline_arima.py                # ARIMA implementation
+├── 📊 Analysis & Comparison/
+│   ├── run_all_standardized.py          # Jalankan semua model dengan config seragam
+│   └── analysis_standardized_results.py # Analisis & visualisasi hasil perbandingan
+├── 🔧 Configuration/
+│   └── light_config.py                  # Config standardized untuk semua dataset
+├── 🛠️ Utilities/
+│   └── prepare_dataset.py               # Download & prepare datasets
 ├── 📋 Results/
-│   ├── results_zeroshot/            # Zero-shot outputs
-│   ├── results_fewshot_moe/         # Few-shot MoE outputs
-│   ├── results_baseline_lstm/       # LSTM outputs
-│   └── results_baseline_arima/      # ARIMA outputs
-└── 📚 uni2ts/                       # Moirai model framework
+│   ├── results_zeroshot/                # Hasil Moirai v2
+│   ├── results_fewshot_moe/             # Hasil Moirai-MoE
+│   ├── results_baseline_lstm/           # Hasil LSTM
+│   ├── results_baseline_arima/          # Hasil ARIMA
+│   └── standardized_results/            # Hasil perbandingan standardized
+└── 📚 uni2ts/                           # Moirai model framework
 ```
 
 ## 🚀 Quick Start
@@ -60,36 +68,37 @@ Moirai_forecasting/
 
 ```powershell
 # Clone repository
-git clone https://github.com/luckedenn/Moirai_forecasting.git
-cd Moirai_forecasting
+cd C:\Skripsi\forecast
 
-# Buat virtual env dan aktifkan
-python -m venv .venv
-./.venv/Scripts/Activate.ps1
+# Buat virtual environment dan aktifkan
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 
-# Install dependencies proyek
+# Install dependencies
 pip install -r requirements.txt
 
-# (Opsional) Install framework uni2ts dari folder lokal
+# (Opsional) Install uni2ts dari folder lokal jika belum
 pip install -e ./uni2ts
 ```
 
 ### 2) Persiapan Data
 
 ```powershell
-# Unduh dan siapkan dataset (weather, CO₂, AAPL)
+# Download dan persiapkan datasets (weather_melbourne, finance_aapl, co2_maunaloa_monthly)
 python prepare_dataset.py
 ```
 
-### 3) Menjalankan Eksperimen
+Output: `data/` folder berisi full/train/val/test splits untuk setiap dataset
 
-#### Zero-Shot Forecasting (Moirai-2)
+### 3) Menjalankan Model Individual
+
+#### Zero-Shot Forecasting (Moirai v2)
 
 ```powershell
 python run_zeroshot_all.py
 ```
 
-#### Few-Shot MoE (Moirai-MoE)
+#### Few-Shot Forecasting (Moirai-MoE)
 
 ```powershell
 python run_fewshot_moe.py
@@ -105,247 +114,288 @@ python baseline_lstm.py
 python baseline_arima.py
 ```
 
+### 4) Menjalankan Semua Model dengan Konfigurasi Standardized
+
+Untuk perbandingan fair dengan konfigurasi seragam:
+
+```powershell
+# Jalankan semua model (zeroshot, fewshot, lstm, arima) dengan config yang sama
+python run_all_standardized.py
+```
+
+### 5) Analisis Hasil Perbandingan
+
+```powershell
+# Analisis dan visualisasi hasil semua model
+python analysis_standardized_results.py
+```
+
+Output: Grafik perbandingan, ranking model, dan statistik di `standardized_results/` dan `standardized_comparison/`
+
 ## 📊 Datasets
 
-| Dataset               | Domain        | Frequency | Length    | Description                   |
-| --------------------- | ------------- | --------- | --------- | ----------------------------- |
-| **Weather Melbourne** | Climate       | Daily     | 10 years  | Daily minimum temperatures    |
-| **AAPL Stock**        | Finance       | Daily     | 10+ years | Apple stock closing prices    |
-| **CO2 Mauna Loa**     | Environmental | Monthly   | 67 years  | Atmospheric CO2 concentration |
+| Dataset               | Domain        | Frequency | Periode   | Deskripsi                     | Pred_len | Context_len |
+| --------------------- | ------------- | --------- | --------- | ----------------------------- | -------- | ----------- |
+| **Weather Melbourne** | Climate       | Daily     | ~10 years | Daily minimum temperatures    | 7 days   | 120 days    |
+| **AAPL Stock**        | Finance       | Daily     | 10+ years | Apple stock closing prices    | 5 days   | 120 days    |
+| **CO2 Mauna Loa**     | Environmental | Monthly   | ~67 years | Atmospheric CO2 concentration | 6 months | 120 months  |
+
+**Note**: Semua datasets sudah disiapkan dalam format train/val/test dengan split ratio 70/15/15
 
 ## 🎯 Models & Methods
 
 ### 🌟 Moirai Universal Transformer
 
-**Zero-Shot Forecasting:**
+**Zero-Shot Forecasting (Moirai v2):**
 
-- ✅ Pre-trained pada 100K+ time series
-- ✅ Universal architecture untuk multi-domain
-- ✅ Tidak perlu training, langsung inference
+- Pre-trained pada 100K+ time series dari berbagai domain
+- Universal architecture yang bisa langsung inference tanpa training
+- File: `run_zeroshot_all.py`
 
-**Few-Shot Learning:**
+**Few-Shot Learning (Moirai-MoE):**
 
-- ✅ Adaptasi dengan 3-5 examples
-- ✅ Domain-specific fine-tuning
-- ✅ Improved accuracy vs zero-shot
-
-**Model Variants:**
-
-- `Moirai v1`: Original transformer architecture
-- `Moirai v2`: Improved version with better efficiency
-- `Moirai-MoE`: Mixture of Experts for specialized domains
+- Mixture of Experts variant untuk domain-specific adaptation
+- Training dengan minimal examples (n_shots=6)
+- File: `run_fewshot_moe.py`
 
 ### 🤖 Deep Learning Baseline (LSTM)
 
-- **Architecture**: Multi-layer LSTM dengan autoregressive forecasting
+- **Architecture**: Multi-layer LSTM (1 layer, hidden_size=32)
 - **Training**: Supervised learning pada historical data
-- **Features**: Sequence-to-point prediction dengan rolling evaluation
+- **Features**: Sequence-to-sequence autoregressive forecasting
+- **Epochs**: 10, Batch size: 64
+- **File**: `baseline_lstm.py`
 
 ### 📈 Statistical Baseline (ARIMA)
 
 - **Method**: Auto-ARIMA dengan automatic parameter selection
-- **Seasonality**: Adaptive seasonal detection (daily/monthly)
-- **Optimization**: Fast mode dengan reduced search space
+- **Seasonality**: Adaptive seasonal detection
+- **Optimization**: Fast mode dengan reduced search space (max_windows=6)
+- **File**: `baseline_arima.py`
 
 ## 📋 Evaluation Metrics
 
-| Metric    | Formula                                                       | Description            |
+| Metric    | Formula                                                       | Deskripsi              |
 | --------- | ------------------------------------------------------------- | ---------------------- |
 | **MAE**   | `mean(\|y_true - y_pred\|)`                                   | Mean Absolute Error    |
 | **RMSE**  | `sqrt(mean((y_true - y_pred)²))`                              | Root Mean Square Error |
 | **sMAPE** | `mean(\|y_pred - y_true\| / (\|y_true\| + \|y_pred\|)) * 100` | Symmetric MAPE (%)     |
 
-## 📊 Sample Results
-
-### Weather Melbourne (7-day forecast)
-
-| Model                | MAE         | RMSE        | sMAPE          |
-| -------------------- | ----------- | ----------- | -------------- |
-| **Moirai Zero-shot** | 1.95 ± 0.40 | 2.45 ± 0.50 | 18.61% ± 4.74% |
-| **Moirai Few-shot**  | 1.15 ± 0.36 | 1.46 ± 0.53 | 8.61% ± 2.47%  |
-| **LSTM Baseline**    | 2.12 ± 0.45 | 2.67 ± 0.58 | 19.5% ± 5.2%   |
-| **ARIMA Baseline**   | 1.89 ± 0.52 | 2.34 ± 0.61 | 17.8% ± 6.1%   |
-
-### AAPL Stock (5-day forecast)
-
-| Model                | MAE         | RMSE        | sMAPE         |
-| -------------------- | ----------- | ----------- | ------------- |
-| **Moirai Zero-shot** | 7.84 ± 3.92 | 9.35 ± 4.76 | 3.66% ± 1.81% |
-| **Moirai Few-shot**  | 6.77 ± 1.72 | 7.68 ± 2.52 | 2.76% ± 0.70% |
-| **LSTM Baseline**    | 8.45 ± 4.12 | 10.2 ± 5.1  | 4.1% ± 2.0%   |
-| **ARIMA Baseline**   | 9.12 ± 3.87 | 11.5 ± 4.8  | 4.5% ± 1.9%   |
+**Note**: Metrik dihitung dengan rolling window evaluation untuk fairness
 
 ## 🎨 Visualization
 
-Semua eksperimen menghasilkan visualisasi komprehensif:
+Setiap model menghasilkan visualisasi hasil forecasting:
 
-- **📈 Time Series Plots**: Ground truth vs predictions
-- **📊 Window Analysis**: Best performing windows
-- **📋 Metrics Dashboard**: Statistical summaries
-- **🎯 Error Analysis**: Residual distributions
+- **📈 Time Series Plots**: Ground truth vs predictions untuk setiap window
+- **📊 Metrics Summary**: CSV files dengan MAE, RMSE, sMAPE per dataset
+- **📋 JSON Metrics**: Detailed metrics untuk setiap hasil forecasting
+- **🎯 Best Windows**: Identifikasi window dengan error terkecil
+
+Output disimpan dalam folder `results_<model_name>/` untuk setiap dataset.
 
 ## 🔧 Configuration
 
-### Hyperparameters
+### Hyperparameters per Dataset (dari `light_config.py`)
 
 ```python
-# Moirai Models
-PREDICTION_LENGTH = 24    # Forecast horizon
-CONTEXT_LENGTH = 720     # Historical context
-BATCH_SIZE = 32          # Inference batch size
-NUM_SAMPLES = 100        # Uncertainty samples
-
-# LSTM Baseline
-HIDDEN_SIZE = 64         # LSTM hidden units
-NUM_LAYERS = 2           # LSTM layers
-EPOCHS = 10              # Training epochs
-LOOKBACK = 180           # Sequence length
-
-# ARIMA Baseline
-MAX_P = 3                # Maximum AR order
-MAX_Q = 3                # Maximum MA order
-SEASONAL = True          # Seasonal ARIMA
-MAX_ITER = 20            # Optimization iterations
-```
-
-### Dataset Configuration
-
-```python
-DATASETS = [
-    {
-        'name': 'weather_melbourne',
-        'csv': 'data/weather_melbourne/weather_melbourne_full.csv',
-        'freq': 'D',           # Daily frequency
-        'pred_len': 7,         # 7-day forecast
-        'context_len': 30,     # 30-day context
+STANDARD_CONFIG = {
+    "weather_melbourne": {
+        "csv": "data/weather_melbourne/weather_melbourne_full.csv",
+        "pred_len": 7,              # Forecast 7 hari ke depan
+        "context_len": 120,         # Gunakan 120 hari history
+        "freq": "D",                # Daily frequency
+        "lookback": 120,            # LSTM context window
+        "n_shots": 6,               # Few-shot examples
+        "max_windows": 6            # Max rolling windows
     },
-    # ... more configurations
-]
+
+    "finance_aapl": {
+        "csv": "data/finance_aapl/finance_aapl_full.csv",
+        "pred_len": 5,              # Forecast 5 hari ke depan
+        "context_len": 120,
+        "freq": "D",
+        "lookback": 120,
+        "n_shots": 6,
+        "max_windows": 6
+    },
+
+    "co2_maunaloa_monthly": {
+        "csv": "data/co2_maunaloa_monthly/co2_maunaloa_monthly_full.csv",
+        "pred_len": 6,              # Forecast 6 bulan ke depan
+        "context_len": 120,
+        "freq": "M",                # Monthly frequency
+        "lookback": 120,
+        "n_shots": 6,
+        "max_windows": 6
+    },
+}
+
+LIGHT_TRAINING_CONFIG = {
+    "lstm": {
+        "epochs": 10,
+        "batch_size": 64,
+        "hidden_size": 32,
+        "num_layers": 1,
+        "learning_rate": 0.001
+    },
+    "arima": {
+        "max_windows": 6,           # Batasi untuk kecepatan
+        "max_p": 3,
+        "max_q": 3,
+        "seasonal": True
+    }
+}
 ```
 
 ## 📚 Dependencies
 
+Semua dependencies sudah terdaftar di `requirements.txt`. Install dengan:
+
+```bash
+pip install -r requirements.txt
+```
+
 ### Core Requirements
 
-```
-torch>=1.12.0
-pandas>=1.5.0
-numpy>=1.21.0
-matplotlib>=3.5.0
-gluonts>=0.13.0
-```
+- **torch** >= 1.12.0 - Deep learning framework
+- **pandas** >= 1.5.0 - Data manipulation
+- **numpy** >= 1.21.0 - Numerical computing
+- **matplotlib** >= 3.5.0 - Visualization
+- **gluonts** >= 0.13.0 - Time series framework
 
 ### Model-Specific
 
-```
-transformers>=4.20.0
-huggingface-hub>=0.10.0
-pmdarima>=2.0.0        # For ARIMA
-scikit-learn>=1.1.0    # For LSTM scaling
-```
-
-### Installation
-
-```bash
-pip install torch pandas numpy matplotlib gluonts transformers huggingface-hub pmdarima scikit-learn
-```
+- **transformers** >= 4.20.0 - Transformer models
+- **huggingface-hub** >= 0.10.0 - Hugging Face integration
+- **pmdarima** >= 2.0.0 - ARIMA implementation
+- **scikit-learn** >= 1.1.0 - Preprocessing & scaling
+- **seaborn** >= 0.11.0 - Statistical visualization
+- **plotly** >= 5.10.0 - Interactive plots
 
 ## 🔄 Data Processing Pipeline
 
 ```mermaid
 graph TD
-    A[Raw CSV Data] --> B[Parse Timestamps]
-    B --> C[Convert to Numeric]
-    C --> D[Handle Missing Values]
-    D --> E[Sort by Time]
-    E --> F[Set Frequency]
-    F --> G[Forward Fill]
+    A["Raw CSV Data"] --> B["Parse Timestamps"]
+    B --> C["Convert to Numeric"]
+    C --> D["Handle Missing Values"]
+    D --> E["Sort by Time"]
+    E --> F["Set Frequency D/M"]
+    F --> G["Forward Fill"]
     G --> H{Model Type}
-    H -->|GluonTS| I[PandasDataset]
-    H -->|LSTM| J[MinMax Scaling]
-    H -->|ARIMA| K[Raw Series]
-    I --> L[Train/Test Split]
+    H -->|Moirai| I["PandasDataset"]
+    H -->|LSTM| J["MinMax Scaling"]
+    H -->|ARIMA| K["Raw Series"]
+    I --> L["Train 70% / Val 15% / Test 15%"]
     J --> L
     K --> L
+    L --> M["Rolling Window Evaluation"]
 ```
 
-## 🎯 Usage Examples
+## 📈 Results Output
 
-### Zero-Shot Prediction
+Setiap model menghasilkan hasil dalam folder `results_<model_name>/`:
 
-```python
-from uni2ts.model.moirai2 import Moirai2Forecast, Moirai2Module
-
-# Load pre-trained model
-module = Moirai2Module.from_pretrained("Salesforce/moirai-2.0-R-small")
-model = Moirai2Forecast(
-    module=module,
-    prediction_length=24,
-    context_length=720,
-)
-
-# Create predictor and forecast
-predictor = model.create_predictor(batch_size=32)
-forecasts = list(predictor.predict(test_data))
+```
+results_<model_name>/
+├── summary_<model>.csv              # Summary metrics per dataset
+└── <dataset_name>/
+    ├── <dataset>_<model>_metrics.json    # Detailed metrics
+    └── <dataset>_<model>_forecasts.csv   # Predictions
 ```
 
-### Few-Shot Learning
+**Standardized Comparison** (hasil dari `run_all_standardized.py`):
 
-```python
-# Train on limited data
-train, test = split(dataset, offset=-n_shots*pred_len)
+- `standardized_results/complete_comparison.csv` - Perbandingan semua model
+- `standardized_results/ranking_summary.csv` - Ranking model per dataset
+- `standardized_comparison/` - Grafik & visualisasi perbandingan
 
-# Generate few-shot windows
-test_data = test.generate_instances(
-    prediction_length=pred_len,
-    windows=n_shots,
-    distance=pred_len
-)
+## 📝 Workflow Eksperimen
 
-# Run inference
-forecasts = list(predictor.predict(test_data.input))
+### 1️⃣ Setup Awal
+
+```powershell
+# Install dependencies
+pip install -r requirements.txt
+
+# Persiapkan data
+python prepare_dataset.py
 ```
 
-## 📈 Performance Optimization
+### 2️⃣ Jalankan Model Individual (Opsional)
 
-### Speed Improvements
+```powershell
+python run_zeroshot_all.py      # ~30 menit
+python run_fewshot_moe.py       # ~40 menit
+python baseline_lstm.py          # ~20 menit
+python baseline_arima.py         # ~15 menit
+```
 
-- **✅ Fast ARIMA**: Reduced parameter search space (5x speedup)
-- **✅ Batch Processing**: Efficient GPU utilization
-- **✅ Parallel Computing**: Multi-core ARIMA fitting
-- **✅ Memory Management**: Optimized data loading
+### 3️⃣ Standardized Comparison (Recommended)
 
-### Accuracy Enhancements
+```powershell
+# Jalankan semua model dengan config yang sama
+python run_all_standardized.py
+```
 
-- **✅ Frequency Normalization**: Stable monthly/daily handling
-- **✅ Robust Error Handling**: Graceful degradation
-- **✅ Data Validation**: Comprehensive input checking
-- **✅ Multiple Seeds**: Reproducible results
+### 4️⃣ Analisis Hasil
+
+```powershell
+# Generate comparison analysis
+python analysis_standardized_results.py
+
+# Output: standardized_results/ dan standardized_comparison/
+```
+
+## 🎯 File Mapping
+
+| Script                             | Tujuan                        | Output                                               |
+| ---------------------------------- | ----------------------------- | ---------------------------------------------------- |
+| `prepare_dataset.py`               | Download & prepare 3 datasets | `data/`                                              |
+| `run_zeroshot_all.py`              | Moirai v2 forecasting         | `results_zeroshot/`                                  |
+| `run_fewshot_moe.py`               | Moirai-MoE forecasting        | `results_fewshot_moe/`                               |
+| `baseline_lstm.py`                 | LSTM forecasting              | `results_baseline_lstm/`                             |
+| `baseline_arima.py`                | ARIMA forecasting             | `results_baseline_arima/`                            |
+| `run_all_standardized.py`          | Jalankan semua model          | Semua results folders                                |
+| `analysis_standardized_results.py` | Analisis & banding hasil      | `standardized_results/` + `standardized_comparison/` |
+| `light_config.py`                  | Centralized configuration     | N/A                                                  |
+
+## 🏆 Standardized Evaluation
+
+Untuk perbandingan yang fair, `run_all_standardized.py` menjalankan semua model dengan:
+
+- Konfigurasi **identical** untuk setiap dataset (dari `light_config.py`)
+- **Prediction length** yang sama untuk forecasting
+- **Context length** yang sama untuk historical data
+- **Rolling window** evaluation dengan jumlah windows yang sama
+
+Hasil comparison disimpan dengan struktur:
+
+- `standardized_results/complete_comparison.csv` - Metrics semua model
+- `standardized_results/ranking_summary.csv` - Ranking berdasarkan MAE
+- `standardized_comparison/` - Visualization plots
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/new-feature`)
-3. Commit changes (`git commit -am 'Add new feature'`)
-4. Push to branch (`git push origin feature/new-feature`)
-5. Create Pull Request
+Jika ingin berkontribusi:
+
+1. Buat feature branch (`git checkout -b feature/new-feature`)
+2. Commit changes (`git commit -m 'Add new feature'`)
+3. Push to branch (`git push origin feature/new-feature`)
+4. Buka Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Project ini menggunakan framework **uni2ts** dari Salesforce Research. Lihat [LICENSE.txt](LICENSE.txt) untuk detail lengkap.
 
 ## 🙏 Acknowledgments
 
-- [Salesforce Research](https://github.com/SalesforceAIResearch/uni2ts) untuk Moirai Universal Transformer
-- [GluonTS](https://ts.gluon.ai/) untuk time series framework
-- [Hugging Face](https://huggingface.co/) untuk model hosting
-
-## 📞 Contact
-
-- **Author**: [Lucas Chandra]
-- **Email**: [lucaschandra05@gmail.com]
-- **GitHub**: [@luckedenn](https://github.com/luckedenn)
+- [Salesforce Research](https://github.com/SalesforceAIResearch/uni2ts) - Moirai Universal Transformer
+- [GluonTS](https://ts.gluon.ai/) - Time series framework
+- [Hugging Face](https://huggingface.co/) - Model hub
+- [Auto-ARIMA (pmdarima)](https://alkaline-ml.com/pmdarima/) - Statistical forecasting
 
 ---
 
-⭐ **Star this repository if you find it helpful!** ⭐
+**Last Updated**: January 2, 2026

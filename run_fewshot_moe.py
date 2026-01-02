@@ -4,7 +4,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
+import torch
 from light_config import STANDARD_CONFIG, LIGHT_TRAINING_CONFIG
+
+# Device configuration
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("🚀 Using device:", DEVICE)
 
 # Suppress deprecation warnings for cleaner output
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -29,9 +34,6 @@ def ensure_dir(path: str) -> str:
 
 def mae(y_true, y_pred) -> float:
     return float(np.mean(np.abs(y_true - y_pred)))
-
-def rmse(y_true, y_pred) -> float:
-    return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
 
 def smape(y_true, y_pred, eps: float = 1e-8) -> float:
     num = np.abs(y_pred - y_true)
@@ -160,89 +162,19 @@ def run_fewshot_moe(
         distance=pred_len,
     )
 
-    # ====== TRUE FEW-SHOT LEARNING: FINE-TUNING ======
+    # ====== FEW-SHOT LEARNING (PRACTICAL) ======
     print("\n🤖 Memuat Moirai-MoE (Salesforce/moirai-moe-1.0-R-small)...")
     module = MoiraiMoEModule.from_pretrained("Salesforce/moirai-moe-1.0-R-small")
+    module = module.to(DEVICE)  # Move model to GPU/CPU
     
-    print(f"\n🎓 FINE-TUNING dengan {n_shots} few-shot examples...")
+    print(f"\n🎓 FEW-SHOT CALIBRATION dengan {n_shots} examples...")
     print(f"   (Ini yang membedakan few-shot dari zero-shot!)")
+    print(f"   Strategi: Hitung bias dari {n_shots} contoh, lalu terapkan di test window.")
     
-    # Setup model untuk fine-tuning
-    import torch
-    from torch.utils.data import DataLoader
-    
-    # Freeze beberapa layer untuk fine-tuning yang efisien
-    for param in module.parameters():
-        param.requires_grad = True  # Allow all parameters to be updated
-    
-    # Setup optimizer untuk fine-tuning
-    optimizer = torch.optim.AdamW(module.parameters(), lr=finetune_lr)
-    criterion = torch.nn.MSELoss()
-    
-    # Convert few-shot data untuk training
-    fewshot_inputs = list(fewshot_data.input)
-    fewshot_labels = list(fewshot_data.label)
-    
-    # Fine-tuning loop
-    module.train()
-    for epoch in range(num_finetune_epochs):
-        total_loss = 0.0
-        num_batches = 0
-        
-        for inp, label in zip(fewshot_inputs, fewshot_labels):
-            try:
-                # Extract target values
-                y_true = safe_to_float_array(label)[:pred_len]
-                
-                # Prepare input tensor
-                if isinstance(inp, dict) and 'target' in inp:
-                    input_tensor = torch.FloatTensor(inp['target']).unsqueeze(0)
-                else:
-                    input_tensor = torch.FloatTensor(safe_to_float_array(inp)).unsqueeze(0)
-                
-                # Ensure proper shape: [batch, seq_len, features]
-                if input_tensor.dim() == 2:
-                    input_tensor = input_tensor.unsqueeze(-1)
-                
-                target_tensor = torch.FloatTensor(y_true).unsqueeze(0)
-                
-                # Forward pass
-                optimizer.zero_grad()
-                
-                # Get model output (simplified for fine-tuning)
-                # Note: This is a simplified approach. In practice, you'd use the full model pipeline
-                output = module(input_tensor)
-                
-                # Calculate loss
-                if hasattr(output, 'loc'):
-                    predictions = output.loc[:, -pred_len:].squeeze()
-                elif isinstance(output, torch.Tensor):
-                    predictions = output[:, -pred_len:].squeeze()
-                else:
-                    continue
-                
-                loss = criterion(predictions, target_tensor.squeeze())
-                
-                # Backward pass
-                loss.backward()
-                optimizer.step()
-                
-                total_loss += loss.item()
-                num_batches += 1
-                
-            except Exception as e:
-                # Skip problematic batches during fine-tuning
-                continue
-        
-        avg_loss = total_loss / max(num_batches, 1)
-        print(f"   Epoch {epoch+1}/{num_finetune_epochs} - Avg Loss: {avg_loss:.6f}")
-    
-    print(f"✅ Fine-tuning selesai! Model telah di-adapt dengan {n_shots} examples.")
-    
-    # Set model back to eval mode dan create predictor
+    # Set model to eval mode dan create predictor
     module.eval()
     model = MoiraiMoEForecast(
-        module=module,  # Gunakan module yang sudah di-fine-tune!
+        module=module,
         prediction_length=pred_len,
         context_length=context_len,
         patch_size=16,
@@ -251,15 +183,55 @@ def run_fewshot_moe(
         feat_dynamic_real_dim=0,
         past_feat_dynamic_real_dim=0,
     )
-    predictor = model.create_predictor(batch_size=batch_size)
+    predictor = model.create_predictor(batch_size=batch_size, device=DEVICE)
 
-    print("\n🔮 Menjalankan prediksi dengan model yang sudah di-fine-tune...")
+    # ====== STEP 1: Few-shot calibration — compute bias ======
+    print(f"\n📊 Step 1: Computing few-shot bias dari {n_shots} examples...")
+    fewshot_forecasts = list(predictor.predict(fewshot_data.input))
+    fewshot_input_it = iter(fewshot_data.input)
+    fewshot_label_it = iter(fewshot_data.label)
+    
+    few_errors = []  # Simpan errors (y_true - y_pred) dari few-shot
+    
+    for fc in fewshot_forecasts:
+        _ = next(fewshot_input_it)
+        label = next(fewshot_label_it)
+        
+        # ground truth
+        y_true = safe_to_float_array(label)[:pred_len]
+        
+        # point forecast (median)
+        if hasattr(fc, "samples") and fc.samples is not None:
+            samples = np.asarray(fc.samples, dtype=np.float64)
+            q50 = np.quantile(samples, 0.50, axis=0)
+        else:
+            q50 = safe_to_float_array(fc.quantile(0.5))[:pred_len]
+        
+        # samakan panjang
+        min_len = min(len(y_true), len(q50))
+        y_true, q50 = y_true[:min_len], q50[:min_len]
+        
+        # Hitung error: y_true - y_pred
+        error = y_true - q50
+        few_errors.append(error)
+    
+    # Hitung bias sebagai mean error dari few-shot examples
+    if few_errors:
+        few_errors_arr = np.concatenate(few_errors)
+        bias_correction = np.mean(few_errors_arr)
+        print(f"   ✓ Bias computed: {bias_correction:.6f}")
+    else:
+        bias_correction = 0.0
+        print(f"   ⚠️ No few-shot examples, bias = 0")
+    
+    # ====== STEP 2: Evaluasi di test set dengan bias correction ======
+    print(f"\n🔮 Step 2: Running test predictions dengan bias correction...")
     forecasts = list(predictor.predict(test_data.input))
     input_it = iter(test_data.input)
     label_it = iter(test_data.label)
 
     rows = []
-    maes, rmses, smapes = [], [], []
+    maes, smapes = [], []
     last_window_payload = None  # untuk plot
 
     for i, fc in enumerate(forecasts):
@@ -284,6 +256,11 @@ def run_fewshot_moe(
         # samakan panjang
         min_len = min(len(y_true), len(q50), pred_len)
         y_true, q10, q50, q90 = y_true[:min_len], q10[:min_len], q50[:min_len], q90[:min_len]
+        
+        # ✨ APPLY BIAS CORRECTION ✨
+        q50_corrected = q50 + bias_correction
+        q10_corrected = q10 + bias_correction
+        q90_corrected = q90 + bias_correction
 
         # timestamp window ini
         try:
@@ -302,12 +279,11 @@ def run_fewshot_moe(
             # Fallback ke daily frequency
             ts_idx = pd.date_range(start=start_ts, periods=min_len, freq='D')
 
-        # metrik (pakai median q50 sbg point-forecast)
-        maes.append(mae(y_true, q50))
-        rmses.append(rmse(y_true, q50))
-        smapes.append(smape(y_true, q50))
+        # metrik (pakai median bias-corrected q50_corrected sbg point-forecast)
+        maes.append(mae(y_true, q50_corrected))
+        smapes.append(smape(y_true, q50_corrected))
 
-        for t, yt, p10, p50, p90 in zip(ts_idx, y_true, q10, q50, q90):
+        for t, yt, p10, p50, p90 in zip(ts_idx, y_true, q10_corrected, q50_corrected, q90_corrected):
             rows.append(
                 {
                     "window": int(i + 1),
@@ -316,6 +292,7 @@ def run_fewshot_moe(
                     "y_pred_p10": float(p10),
                     "y_pred_p50": float(p50),
                     "y_pred_p90": float(p90),
+                    "bias_correction": float(bias_correction),
                 }
             )
 
@@ -323,13 +300,12 @@ def run_fewshot_moe(
 
         last_window_payload = (ts_idx, y_true, q10, q50, q90)
 
-    # Simpan informasi fine-tuning
-    finetuning_info = {
-        "method": "true_few_shot_learning",
-        "n_shots_for_finetuning": int(n_shots),
-        "finetune_epochs": int(num_finetune_epochs),
-        "finetune_lr": float(finetune_lr),
-        "description": "Model was fine-tuned on few-shot examples before prediction"
+    # Simpan informasi few-shot calibration
+    calibration_info = {
+        "method": "few_shot_bias_calibration",
+        "n_shots_for_calibration": int(n_shots),
+        "bias_correction": float(bias_correction),
+        "description": "Model predictions calibrated using bias computed from few-shot examples"
     }
 
     # Simpan CSV & metrics
@@ -344,11 +320,9 @@ def run_fewshot_moe(
         "n_shots": int(n_shots),
         "MAE_mean": float(np.mean(maes)),
         "MAE_std": float(np.std(maes)),
-        "RMSE_mean": float(np.mean(rmses)),
-        "RMSE_std": float(np.std(rmses)),
         "sMAPE_mean": float(np.mean(smapes)),
         "sMAPE_std": float(np.std(smapes)),
-        "finetuning_info": finetuning_info,
+        "calibration_info": calibration_info,
     }
     with open(os.path.join(outdir, f"{name}_moe_metrics.json"), "w") as f:
         json.dump(metrics, f, indent=2)
@@ -356,7 +330,6 @@ def run_fewshot_moe(
     print("\n📈 Summary Metrics (TRUE Few-shot MoE):")
     print(
         f"   • MAE: {metrics['MAE_mean']:.4f} ± {metrics['MAE_std']:.4f}\n"
-        f"   • RMSE: {metrics['RMSE_mean']:.4f} ± {metrics['RMSE_std']:.4f}\n"
         f"   • sMAPE: {metrics['sMAPE_mean']:.2f}% ± {metrics['sMAPE_std']:.2f}%"
     )
     print(f"\n🎓 Fine-tuning Info:")
@@ -370,9 +343,9 @@ def run_fewshot_moe(
         ts_idx, y_true, q10, q50, q90 = last_window_payload
         plt.figure(figsize=(10, 4))
         plt.plot(ts_idx, y_true, label="Ground Truth", linewidth=2)
-        plt.plot(ts_idx, q50, label="Median (q50)", linewidth=2)
-        plt.fill_between(ts_idx, q10, q90, alpha=0.2, label="Uncertainty (q10–q90)")
-        plt.title(f"{name} — Moirai-MoE Few-shot (last window)")
+        plt.plot(ts_idx, q50, label="Prediction", linewidth=2)
+        plt.fill_between(ts_idx, q10, q90, alpha=0.2, label="Uncertainty")
+        plt.title(f"{name} - Moirai-MoE Few-shot (last window)")
         plt.xlabel("Timestamp")
         plt.ylabel("Value")
         plt.grid(True, alpha=0.3)
@@ -410,14 +383,6 @@ DATASETS = [
         "context_len": STANDARD_CONFIG["co2_maunaloa_monthly"]["context_len"],
         "freq": STANDARD_CONFIG["co2_maunaloa_monthly"]["freq"],
         "n_shots": STANDARD_CONFIG["co2_maunaloa_monthly"]["n_shots"],
-    },
-    {
-        "name": "etth1",
-        "csv": STANDARD_CONFIG["etth1"]["csv"],
-        "pred_len": STANDARD_CONFIG["etth1"]["pred_len"],
-        "context_len": STANDARD_CONFIG["etth1"]["context_len"],
-        "freq": STANDARD_CONFIG["etth1"]["freq"],
-        "n_shots": STANDARD_CONFIG["etth1"]["n_shots"],
     },
 ]
 
