@@ -140,7 +140,16 @@ Output: Grafik perbandingan, ranking model, dan statistik di `standardized_resul
 | **AAPL Stock**        | Finance       | Daily     | 10+ years | Apple stock closing prices    | 5 days   | 120 days    |
 | **CO2 Mauna Loa**     | Environmental | Monthly   | ~67 years | Atmospheric CO2 concentration | 6 months | 120 months  |
 
-**Note**: Semua datasets sudah disiapkan dalam format train/val/test dengan split ratio 70/15/15
+**Note**: Semua datasets disimpan dalam 4 file (full/train/val/test) dengan split ratio 70/15/15, namun model hanya menggunakan `*_full.csv` dan melakukan split internal (85% training : 15% testing).
+
+### Dataset Files vs Model Usage
+
+| File          | Dibuat oleh          | Digunakan oleh    | Status              |
+| ------------- | -------------------- | ----------------- | ------------------- |
+| `*_full.csv`  | `prepare_dataset.py` | ✅ Semua model    | **AKTIF**           |
+| `*_train.csv` | `prepare_dataset.py` | ❌ Reference only | **TIDAK DIGUNAKAN** |
+| `*_val.csv`   | `prepare_dataset.py` | ❌ Reference only | **TIDAK DIGUNAKAN** |
+| `*_test.csv`  | `prepare_dataset.py` | ❌ Reference only | **TIDAK DIGUNAKAN** |
 
 ## 🎯 Models & Methods
 
@@ -275,23 +284,66 @@ pip install -r requirements.txt
 
 ## 🔄 Data Processing Pipeline
 
+### Phase 1: Dataset Preparation (`prepare_dataset.py`)
+
 ```mermaid
 graph TD
-    A["Raw CSV Data"] --> B["Parse Timestamps"]
-    B --> C["Convert to Numeric"]
-    C --> D["Handle Missing Values"]
-    D --> E["Sort by Time"]
-    E --> F["Set Frequency D/M"]
-    F --> G["Forward Fill"]
-    G --> H{Model Type}
-    H -->|Moirai| I["PandasDataset"]
-    H -->|LSTM| J["MinMax Scaling"]
-    H -->|ARIMA| K["Raw Series"]
-    I --> L["Train 70% / Val 15% / Test 15%"]
-    J --> L
-    K --> L
-    L --> M["Rolling Window Evaluation"]
+    A["Raw Data"] --> B["Download & Parse"]
+    B --> C["Standardize Columns"]
+    C --> D["Remove NaN/Duplicates"]
+    D --> E["Sort by Timestamp"]
+    E --> F["Time-based Split"]
+    F --> G["Save 4 Files"]
+    G --> G1["*_full.csv 100%"]
+    G --> G2["*_train.csv 70%"]
+    G --> G3["*_val.csv 15%"]
+    G --> G4["*_test.csv 15%"]
 ```
+
+**Output**: 4 CSV files per dataset
+
+- `*_full.csv` - Complete dataset
+- `*_train.csv` - 70% for reference
+- `*_val.csv` - 15% for reference
+- `*_test.csv` - 15% for reference
+
+⚠️ **Note**: `*_train.csv`, `*_val.csv`, `*_test.csv` are created for reference but **NOT used by models**
+
+### Phase 2: Model Processing (Internal Split)
+
+Semua model membaca `*_full.csv` dan melakukan split internal:
+
+```mermaid
+graph TD
+    A["*_full.csv"] --> B["Parse & Preprocess"]
+    B --> C["Calculate Test Length"]
+    C --> D["Internal Split"]
+    D --> D1["85% Training Data"]
+    D --> D2["15% Test Data<br/>for Rolling Windows"]
+    D1 --> E{Model Type}
+    D2 --> E
+    E -->|Moirai| F["PandasDataset<br/>No Scaling"]
+    E -->|LSTM| G["MinMax Scaling<br/>fit on train only"]
+    E -->|ARIMA| H["Raw Series<br/>No Scaling"]
+    F --> I["Rolling Window<br/>Evaluation"]
+    G --> I
+    H --> I
+    I --> J["Generate Metrics<br/>per Window"]
+```
+
+**Key Details:**
+
+- **Training split**: 85% dari total data (digunakan untuk training)
+- **Test split**: 15% dari total data (untuk rolling window evaluation)
+- **Context length**: `lookback` / `context_len` diambil dari historical data sebelum setiap window
+- **Scaling**: Hanya fit pada training data (tidak leak test data)
+- **Rolling windows**: Multiple forecast windows untuk robust evaluation
+
+**Per-Dataset Configuration** (dari `light_config.py`):
+
+- **Weather Melbourne**: 7-day forecast, 120-day context, max 6 windows
+- **AAPL Stock**: 5-day forecast, 120-day context, max 6 windows
+- **CO2 Mauna Loa**: 6-month forecast, 120-month context, max 6 windows
 
 ## 📈 Results Output
 
